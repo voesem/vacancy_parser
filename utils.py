@@ -115,7 +115,11 @@ class Vacancy:
 
 class JSONSaver:
 
+    list_of_vacancies = []
+
     def add_vacancy(self, data):
+
+        JSONSaver.list_of_vacancies.append(data)
+
         with open('saved_vacancies.json', 'a', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-            f.write(',\n')
+            json.dump(JSONSaver.list_of_vacancies, f, ensure_ascii=False, indent=4)
