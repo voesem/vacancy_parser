@@ -52,13 +52,14 @@ class Vacancy:
     """
     all = []
 
-    def __init__(self, name, url, requirement, responsibility, salary_from, salary_to):
+    def __init__(self, name, url, requirement, responsibility, salary_from, salary_to, employer):
         self.name = name
         self.url = url
         self.requirement = requirement
         self.responsibility = responsibility
         self.salary_from = salary_from
         self.salary_to = salary_to
+        self.employer = employer
 
         Vacancy.all.append(self)
 
@@ -67,7 +68,12 @@ class Vacancy:
                f'"{self.requirement}", "{self.responsibility}", "{self.salary_from}", "{self.salary_to}")'
 
     def __str__(self):
-        return self.name
+        return f'Название вакансии: {self.name}.\n'\
+               f'Название компании: {self.employer}.\n'\
+               f'Зарплата: от {self.salary_from} до {self.salary_to} рублей.\n'\
+               f'Описание: {self.responsibility}.\n'\
+               f'Требования: {self.requirement}.\n'\
+               f'Ссылка на вакансию: {self.url}'
 
     def __gt__(self, other):
         return self.salary_from > other.salary_from
@@ -78,17 +84,38 @@ class Vacancy:
     @classmethod
     def instantiate_from_json(cls):
         """
-        Класс-метод, инициализирующий экземпляры класса из созданного классом HeadHunterAPI json-файла
-        :return:
+        Класс-метод, инициализирующий экземпляры класса из созданного классом HeadHunterAPI json-файла.
+        Инициализируются только те вакансии, в которых указаны зарплаты "от" и "до".
         """
         with open('vacancies.json', encoding='utf-8') as f:
             text = json.load(f)
             for vacancy in text:
-                cls(
-                    name=vacancy['name'],
-                    url=vacancy['alternate_url'],
-                    requirement=vacancy['snippet']['requirement'],
-                    responsibility=vacancy['snippet']['responsibility'],
-                    salary_from=vacancy["salary"]["from"],
-                    salary_to=vacancy["salary"]["to"]
-                )
+                if vacancy["salary"]["from"] is not None and vacancy["salary"]["to"] is not None:
+                    cls(
+                        name=vacancy['name'],
+                        url=vacancy['alternate_url'],
+                        requirement=vacancy['snippet']['requirement'],
+                        responsibility=vacancy['snippet']['responsibility'],
+                        salary_from=vacancy['salary']['from'],
+                        salary_to=vacancy['salary']['to'],
+                        employer=vacancy['employer']['name']
+                    )
+
+    def as_dict(self):
+        return {
+            'Название вакансии': self.name,
+            'Название компании': self.employer,
+            'Зарплата от': self.salary_from,
+            'Зарплата до': self.salary_to,
+            'Описание': self.responsibility,
+            'Требования': self.requirement,
+            'Ссылка на вакансию': self.url
+        }
+
+
+class JSONSaver:
+
+    def add_vacancy(self, data):
+        with open('saved_vacancies.json', 'a', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+            f.write(',\n')
