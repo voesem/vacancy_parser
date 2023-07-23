@@ -17,7 +17,7 @@ def main():
         filtered_vacancies = []
         for vacancy in Vacancy.all:
             if vacancy.salary_from >= salary:
-                filtered_vacancies.append(vacancy)
+                filtered_vacancies.append(vacancy.as_dict())
                 num += 1
                 print(
                     f'{num}. Название вакансии: {vacancy.name}\n'
@@ -26,15 +26,7 @@ def main():
                 )
                 print()
 
-        chosen_num = int(input('Введите порядковый номер вакансии, о которой хотите узнать подробнее:\n'))
-        chosen_vacancy = filtered_vacancies[chosen_num - 1]
-        print(chosen_vacancy)
-
-        saved_vacancy = input('Сохранить вакансию?\n1 - Да\n2 - Нет\n')
-
-        if saved_vacancy == '1':
-            json_saver.add_vacancy(chosen_vacancy.as_dict())
-
+        json_saver.add_vacancy(filtered_vacancies)
     elif platform_name == '2':
         pass
     else:

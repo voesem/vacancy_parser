@@ -1,6 +1,13 @@
-import requests
 import json
+import os
 from abc import ABC, abstractmethod
+
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SUPERJOB_API_KEY = os.getenv('SUPERJOB_API_KEY')
 
 
 class Parser(ABC):
@@ -45,6 +52,27 @@ class HeadHunterAPI(Parser):
             json.dump(vacancies['items'], f, ensure_ascii=False, indent=4)
 
 
+class SuperJobAPI(Parser):
+
+    def get_vacancies(self, vacancy_name):
+        headers = {'X-Api-App-Id': SUPERJOB_API_KEY}
+        params = {
+            'keyword': vacancy_name,
+            'keywords': {'srws': 1},
+            'town': 4,
+            'no_agreement': 1
+        }
+
+        req = requests.get('https://api.superjob.ru/2.0/vacancies', params=params, headers=headers)
+        data = req.content.decode()
+        req.close()
+
+        vacancies = json.loads(data)
+
+        with open('vacancies_from_superjob.json', 'w', encoding='utf-8') as f:
+            json.dump(vacancies['objects'], f, ensure_ascii=False, indent=4)
+
+
 class Vacancy:
     """
     Класс для работы с вакансиями, инициализирующийся по
@@ -68,11 +96,11 @@ class Vacancy:
                f'"{self.requirement}", "{self.responsibility}", "{self.salary_from}", "{self.salary_to}")'
 
     def __str__(self):
-        return f'Название вакансии: {self.name}.\n'\
-               f'Название компании: {self.employer}.\n'\
-               f'Зарплата: от {self.salary_from} до {self.salary_to} рублей.\n'\
-               f'Описание: {self.responsibility}.\n'\
-               f'Требования: {self.requirement}.\n'\
+        return f'Название вакансии: {self.name}.\n' \
+               f'Название компании: {self.employer}.\n' \
+               f'Зарплата: от {self.salary_from} до {self.salary_to} рублей.\n' \
+               f'Описание: {self.responsibility}.\n' \
+               f'Требования: {self.requirement}.\n' \
                f'Ссылка на вакансию: {self.url}'
 
     def __gt__(self, other):
@@ -115,11 +143,10 @@ class Vacancy:
 
 class JSONSaver:
 
-    list_of_vacancies = []
-
     def add_vacancy(self, data):
+        with open('saved_vacancies.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
 
-        JSONSaver.list_of_vacancies.append(data)
 
-        with open('saved_vacancies.json', 'a', encoding='utf-8') as f:
-            json.dump(JSONSaver.list_of_vacancies, f, ensure_ascii=False, indent=4)
+sj = SuperJobAPI()
+sj.get_vacancies('python')
