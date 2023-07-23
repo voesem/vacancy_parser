@@ -55,6 +55,14 @@ class HeadHunterAPI(Parser):
 class SuperJobAPI(Parser):
 
     def get_vacancies(self, vacancy_name):
+        """
+        Метод для работы с API SuperJob
+
+        :param vacancy_name: на вход подается поисковой запрос вакансии
+
+        Метод записывает полученные данные в json-файл
+        """
+
         headers = {'X-Api-App-Id': SUPERJOB_API_KEY}
         params = {
             'keyword': vacancy_name,
@@ -109,7 +117,7 @@ class Vacancy:
     @classmethod
     def instantiate_from_json(cls):
         """
-        Класс-метод, инициализирующий экземпляры класса из созданного классом HeadHunterAPI json-файла.
+        Класс-метод, инициализирующий экземпляры класса из созданного классами HeadHunterAPI и SuperJobAPI json-файлов.
         Инициализируются только те вакансии, в которых указаны зарплаты "от" и "до".
         """
         with open('vacancies_from_headhunter.json', encoding='utf-8') as f:
@@ -139,6 +147,9 @@ class Vacancy:
                     )
 
     def as_dict(self):
+        """
+        Метод для представления экземпляра класса в виде словаря
+        """
         return {
             'Название вакансии': self.name,
             'Название компании': self.employer,
@@ -150,6 +161,9 @@ class Vacancy:
 
 
 class JSONSaver:
+    """
+    Класс для записи отфильтрованных пользователем вакансий в json-файл
+    """
 
     def add_vacancy(self, data):
         with open('saved_vacancies.json', 'w', encoding='utf-8') as f:
