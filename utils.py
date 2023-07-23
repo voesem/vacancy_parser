@@ -48,7 +48,7 @@ class HeadHunterAPI(Parser):
 
         vacancies = json.loads(data)
 
-        with open('vacancies.json', 'w', encoding='utf-8') as f:
+        with open('vacancies_from_headhunter.json', 'w', encoding='utf-8') as f:
             json.dump(vacancies['items'], f, ensure_ascii=False, indent=4)
 
 
@@ -58,7 +58,6 @@ class SuperJobAPI(Parser):
         headers = {'X-Api-App-Id': SUPERJOB_API_KEY}
         params = {
             'keyword': vacancy_name,
-            'keywords': {'srws': 1},
             'town': 4,
             'no_agreement': 1
         }
@@ -80,10 +79,9 @@ class Vacancy:
     """
     all = []
 
-    def __init__(self, name, url, requirement, responsibility, salary_from, salary_to, employer):
+    def __init__(self, name, url, responsibility, salary_from, salary_to, employer):
         self.name = name
         self.url = url
-        self.requirement = requirement
         self.responsibility = responsibility
         self.salary_from = salary_from
         self.salary_to = salary_to
@@ -93,14 +91,13 @@ class Vacancy:
 
     def __repr__(self):
         return f'{self.__class__.__name__}("{self.name}", "{self.url}", ' \
-               f'"{self.requirement}", "{self.responsibility}", "{self.salary_from}", "{self.salary_to}")'
+               f'"{self.responsibility}", "{self.salary_from}", "{self.salary_to}")'
 
     def __str__(self):
         return f'Название вакансии: {self.name}.\n' \
                f'Название компании: {self.employer}.\n' \
                f'Зарплата: от {self.salary_from} до {self.salary_to} рублей.\n' \
                f'Описание: {self.responsibility}.\n' \
-               f'Требования: {self.requirement}.\n' \
                f'Ссылка на вакансию: {self.url}'
 
     def __gt__(self, other):
@@ -115,18 +112,30 @@ class Vacancy:
         Класс-метод, инициализирующий экземпляры класса из созданного классом HeadHunterAPI json-файла.
         Инициализируются только те вакансии, в которых указаны зарплаты "от" и "до".
         """
-        with open('vacancies.json', encoding='utf-8') as f:
+        with open('vacancies_from_headhunter.json', encoding='utf-8') as f:
             text = json.load(f)
             for vacancy in text:
                 if vacancy["salary"]["from"] is not None and vacancy["salary"]["to"] is not None:
                     cls(
                         name=vacancy['name'],
                         url=vacancy['alternate_url'],
-                        requirement=vacancy['snippet']['requirement'],
                         responsibility=vacancy['snippet']['responsibility'],
                         salary_from=vacancy['salary']['from'],
                         salary_to=vacancy['salary']['to'],
                         employer=vacancy['employer']['name']
+                    )
+
+        with open('vacancies_from_superjob.json', encoding='utf-8') as f:
+            text = json.load(f)
+            for vacancy in text:
+                if vacancy["payment_from"] != 0 and vacancy["payment_to"] != 0:
+                    cls(
+                        name=vacancy['profession'],
+                        url=vacancy['link'],
+                        responsibility=vacancy['candidat'],
+                        salary_from=vacancy['payment_from'],
+                        salary_to=vacancy['payment_to'],
+                        employer=vacancy['client']['title']
                     )
 
     def as_dict(self):
@@ -136,7 +145,6 @@ class Vacancy:
             'Зарплата от': self.salary_from,
             'Зарплата до': self.salary_to,
             'Описание': self.responsibility,
-            'Требования': self.requirement,
             'Ссылка на вакансию': self.url
         }
 
@@ -146,7 +154,3 @@ class JSONSaver:
     def add_vacancy(self, data):
         with open('saved_vacancies.json', 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-
-
-sj = SuperJobAPI()
-sj.get_vacancies('python')
